@@ -3,153 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Doruk Stars | Proje X</title>
+    <title>Doruk Stars | Pro Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
-        body { margin: 0; background: #000; overflow: hidden; font-family: 'Arial Black', sans-serif; }
+        body { margin: 0; background: #0b0d17; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         
-        /* Brawl Stars Tarzı Üst Panel */
+        /* ÜST PANEL */
         #top-bar {
-            position: absolute; top: 0; width: 100%; height: 50px;
-            background: rgba(0,0,0,0.6); display: flex; align-items: center;
-            justify-content: space-between; z-index: 10; color: white; padding: 0 10px;
-            box-sizing: border-box; border-bottom: 3px solid #f39c12;
+            position: absolute; top: 0; width: 100%; height: 60px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+            display: flex; align-items: center; justify-content: space-between;
+            z-index: 100; color: white; padding: 0 20px; box-sizing: border-box;
         }
-        .stat-box { background: #2c3e50; padding: 5px 15px; border-radius: 20px; border: 2px solid #ecf0f1; font-size: 14px; }
-        .gold { color: #f1c40f; } .gem { color: #2ecc71; } .trophy { color: #e67e22; }
+        .stat { background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 20px; border: 2px solid #f39c12; font-weight: bold; }
 
-        /* Oyun Alanı Konteynırı */
-        #game-container { display: flex; justify-content: center; align-items: center; height: 100vh; }
+        /* ANA MENÜ BUTONLARI */
+        #ui-container {
+            position: absolute; bottom: 20px; width: 100%; display: flex;
+            justify-content: center; gap: 10px; z-index: 100;
+        }
+        .btn {
+            background: #e74c3c; color: white; padding: 12px 20px;
+            border-radius: 10px; border: 4px solid #c0392b; cursor: pointer;
+            font-weight: bold; text-transform: uppercase; transition: 0.1s;
+        }
+        .btn:active { transform: scale(0.9); }
+        .play-btn { background: #f1c40f; border-color: #d35400; color: black; font-size: 24px; padding: 15px 60px; }
 
-        /* Alt Menü (Dükkan, Savaşçılar) */
-        #bottom-menu {
-            position: absolute; bottom: 10px; width: 90%; display: flex;
-            justify-content: space-around; z-index: 10;
+        /* OVERLAY MENÜLER (Dükkan & Savaşçılar) */
+        .overlay {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
+            width: 80%; height: 70%; background: #1a1c2c; border: 5px solid #f39c12;
+            z-index: 200; border-radius: 20px; color: white; padding: 20px;
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); overflow-y: auto;
         }
-        .menu-btn {
-            background: #e74c3c; color: white; padding: 10px 20px;
-            border-radius: 10px; border: 3px solid #c0392b; cursor: pointer;
-            text-transform: uppercase; font-size: 12px; transition: 0.2s;
-        }
-        .menu-btn:hover { transform: scale(1.1); background: #ff5e4d; }
-        .play-btn { background: #f1c40f; color: #000; font-size: 20px; padding: 15px 40px; border: 4px solid #d35400; }
+        .overlay.active { transform: translate(-50%, -50%) scale(1); }
+        .close-btn { position: absolute; right: 10px; top: 10px; background: red; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 5px; }
+
+        /* MENÜ İÇERİKLERİ */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; margin-top: 20px; }
+        .card { background: #2c3e50; border-radius: 10px; padding: 10px; text-align: center; border-bottom: 5px solid #000; }
+        .card img { width: 100%; border-radius: 5px; }
     </style>
 </head>
 <body>
 
     <div id="top-bar">
-        <div class="stat-box trophy">🏆 36757</div>
-        <div style="font-size: 18px; letter-spacing: 2px;">SK | DSFXTR</div>
+        <div class="stat" style="color:#e67e22">🏆 36757</div>
+        <div style="font-size: 22px; text-shadow: 2px 2px #000;">SK | DSFXTR</div>
         <div style="display:flex; gap:10px;">
-            <div class="stat-box gold">🟡 14389</div>
-            <div class="stat-box gem">💎 116</div>
+            <div class="stat" style="color:#f1c40f">🟡 14389</div>
+            <div class="stat" style="color:#2ecc71">💎 116</div>
         </div>
     </div>
 
     <div id="game-container"></div>
 
-    <div id="bottom-menu">
-        <div class="menu-btn">Dükkan</div>
-        <div class="menu-btn">Savaşçılar (99/100)</div>
-        <div class="menu-btn play-btn" onclick="alert('Savaş Başlıyor!')">OYNA</div>
-        <div class="menu-btn">Arkadaş (49)</div>
-        <div class="menu-btn">Kulüp</div>
+    <div id="ui-container">
+        <div class="btn" onclick="openMenu('shop')">Dükkan</div>
+        <div class="btn" onclick="openMenu('brawlers')">Savaşçılar</div>
+        <div class="btn play-btn" onclick="startGame()">OYNA</div>
+        <div class="btn">Kulüp</div>
+    </div>
+
+    <div id="shop" class="overlay">
+        <button class="close-btn" onclick="closeMenu('shop')">X</button>
+        <h2>DÜKKAN - ÖZEL TEKLİFLER</h2>
+        <div class="grid">
+            <div class="card"><h3>PSG Shelly</h3><p>💎 69</p></div>
+            <div class="card"><h3>Böcek Carl</h3><p>💎 104</p></div>
+            <div class="card"><h3>Ücretsiz</h3><p>🎁 Al</p></div>
+        </div>
+    </div>
+
+    <div id="brawlers" class="overlay">
+        <button class="close-btn" onclick="closeMenu('brawlers')">X</button>
+        <h2>SAVAŞÇILAR (99/100)</h2>
+        <div class="grid">
+            <div class="card" style="background: #fbff00; color: black;"><h3>KENJI</h3><p>GÜÇ 11</p></div>
+            <div class="card" style="background: #e74c3c;"><h3>MORTIS</h3><p>GÜÇ 11</p></div>
+            <div class="card" style="background: #3498db;"><h3>COLT</h3><p>GÜÇ 11</p></div>
+            <div class="card" style="background: #9b59b6;"><h3>EDGAR</h3><p>GÜÇ 11</p></div>
+        </div>
     </div>
 
     <script>
+        // MENÜ KONTROLLERİ
+        function openMenu(id) { document.getElementById(id).classList.add('active'); }
+        function closeMenu(id) { document.getElementById(id).classList.remove('active'); }
+        function startGame() { alert("Savaş Alanına Giriliyor..."); }
+
+        // OYUN MOTORU (PHASER)
         const config = {
             type: Phaser.AUTO,
-            width: 1000,
-            height: 600,
+            width: window.innerWidth,
+            height: window.innerHeight,
             parent: 'game-container',
-            physics: { default: 'arcade', arcade: { debug: false } },
+            physics: { default: 'arcade' },
             scene: { preload: preload, create: create, update: update }
         };
 
         const game = new Phaser.Game(config);
-        let player, cursors, bullets, enemies, bushes, joystick;
+        let player, bushes, cursors;
 
         function preload() {
-            // Fotoğraflardaki Showdown (Hesaplaşma) atmosferi için varlıklar
-            this.load.image('bg', 'https://labs.phaser.io/assets/skies/space3.png'); // Zemin
-            this.load.image('bush', 'https://labs.phaser.io/assets/sprites/phaser-dude.png'); // Çalı temsili
-            this.load.image('hero', 'https://labs.phaser.io/assets/sprites/asmos.png'); // Karakter (Doruk)
-            this.load.image('enemy', 'https://labs.phaser.io/assets/sprites/shmup-ship.png'); // Rakip
-            this.load.image('bullet', 'https://labs.phaser.io/assets/sprites/bullets/bullet6.png');
+            // Arkaplan ve Karakterler
+            this.load.image('ground', 'https://labs.phaser.io/assets/tests/cols/green-tile.png');
+            this.load.image('hero', 'https://labs.phaser.io/assets/sprites/asmos.png');
+            this.load.image('bush', 'https://labs.phaser.io/assets/sprites/block.png');
         }
 
         function create() {
-            // 1. ZEMİN VE ÇALILAR
-            this.add.tileSprite(500, 300, 2000, 2000, 'bg').setAlpha(0.3);
-            
+            // Gerçek Showdown Zemini
+            this.add.tileSprite(0, 0, 4000, 4000, 'ground').setOrigin(0).setTint(0x1e5d2f);
+
+            // Çalılar (Gruplandırılmış)
             bushes = this.physics.add.staticGroup();
-            for(let i=0; i<10; i++) {
-                let bx = Phaser.Math.Between(100, 900);
-                let by = Phaser.Math.Between(100, 500);
-                let b = bushes.create(bx, by, 'bush').setScale(1.5).setTint(0x27ae60);
+            for(let i=0; i<30; i++) {
+                bushes.create(Phaser.Math.Between(100, 1500), Phaser.Math.Between(100, 1500), 'bush').setScale(2).setTint(0x0d3b1a).setAlpha(0.8);
             }
 
-            // 2. OYUNCU (Fotoğraftaki gibi yeşil halkalı)
-            player = this.physics.add.sprite(500, 300, 'hero');
+            // Karakter (Yeşil Halkalı)
+            player = this.physics.add.sprite(window.innerWidth/2, window.innerHeight/2, 'hero');
             player.setCollideWorldBounds(true);
-            player.setCircle(20);
             
-            // Altındaki Yeşil Halka
-            let circle = this.add.graphics();
-            circle.lineStyle(3, 0x2ecc71, 1);
-            circle.strokeCircle(0, 0, 30);
-            this.playerRing = circle;
+            let ring = this.add.graphics();
+            ring.lineStyle(4, 0x2ecc71, 0.8);
+            ring.strokeCircle(0, 0, 35);
+            this.ring = ring;
 
-            // 3. RAKİPLER
-            enemies = this.physics.add.group();
-            for(let i=0; i<4; i++) {
-                let ex = Phaser.Math.Between(100, 900);
-                let ey = Phaser.Math.Between(100, 500);
-                let e = enemies.create(ex, ey, 'enemy').setTint(0xe74c3c);
-                e.hp = 4000;
-            }
-
-            // 4. SİSTEMLER
-            bullets = this.physics.add.group();
             cursors = this.input.keyboard.createCursorKeys();
-            
-            // Ateş Etme (Tıklanan yere)
-            this.input.on('pointerdown', (pointer) => {
-                let bullet = bullets.create(player.x, player.y, 'bullet');
-                this.physics.moveToObject(bullet, pointer, 500);
-            });
-
-            // Çalıya girme kontrolü
-            this.physics.add.overlap(player, bushes, () => {
-                player.setAlpha(0.5); // Çalıda gizlenme efekti
-            });
-
-            // Mermi düşmana değerse
-            this.physics.add.overlap(bullets, enemies, (b, e) => {
-                b.destroy();
-                e.setTint(0xffffff);
-                this.time.delayedCall(100, () => e.setTint(0xe74c3c));
-                this.cameras.main.shake(50, 0.005);
-            });
+            this.cameras.main.startFollow(player);
         }
 
         function update() {
             player.setVelocity(0);
-            
-            // Hareket Mantığı
-            if (cursors.left.isDown) player.setVelocityX(-250);
-            else if (cursors.right.isDown) player.setVelocityX(250);
-            if (cursors.up.isDown) player.setVelocityY(-250);
-            else if (cursors.down.isDown) player.setVelocityY(250);
+            if (cursors.left.isDown) player.setVelocityX(-300);
+            else if (cursors.right.isDown) player.setVelocityX(300);
+            if (cursors.up.isDown) player.setVelocityY(-300);
+            else if (cursors.down.isDown) player.setVelocityY(300);
 
-            // Yeşil halkayı oyuncuyla taşı
-            this.playerRing.x = player.x;
-            this.playerRing.y = player.y;
+            this.ring.x = player.x;
+            this.ring.y = player.y;
 
-            // Çalıdan çıkınca görünür ol
-            if (!this.physics.overlap(player, bushes)) {
-                player.setAlpha(1);
-            }
+            // Çalı Gizleme Mekaniği
+            let inBush = false;
+            this.physics.overlap(player, bushes, () => { inBush = true; });
+            player.setAlpha(inBush ? 0.4 : 1);
         }
     </script>
 </body>
