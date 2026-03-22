@@ -3,154 +3,253 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Doruk Stars | Pro Edition</title>
+    <title>Doruk Stars | Pro Sürüm</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
-        body { margin: 0; background: #0b0d17; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { margin: 0; background: #0b0d17; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; }
         
+        /* OYUN LOBİSİ (Arayüz) */
+        #lobby-ui {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('https://labs.phaser.io/assets/skies/space3.png') center/cover;
+            z-index: 100; display: flex; flex-direction: column; justify-content: space-between;
+        }
+
         /* ÜST PANEL */
         #top-bar {
-            position: absolute; top: 0; width: 100%; height: 60px;
-            background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+            width: 100%; height: 60px; background: rgba(0,0,0,0.8);
             display: flex; align-items: center; justify-content: space-between;
-            z-index: 100; color: white; padding: 0 20px; box-sizing: border-box;
+            padding: 0 20px; box-sizing: border-box; border-bottom: 3px solid #f39c12;
         }
-        .stat { background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 20px; border: 2px solid #f39c12; font-weight: bold; }
+        .stat { background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 20px; border: 2px solid #f39c12; font-weight: bold; color: white; }
 
         /* ANA MENÜ BUTONLARI */
-        #ui-container {
-            position: absolute; bottom: 20px; width: 100%; display: flex;
-            justify-content: center; gap: 10px; z-index: 100;
+        #bottom-bar {
+            width: 100%; display: flex; justify-content: center; gap: 15px; padding-bottom: 20px;
         }
         .btn {
-            background: #e74c3c; color: white; padding: 12px 20px;
+            background: #e74c3c; color: white; padding: 15px 25px;
             border-radius: 10px; border: 4px solid #c0392b; cursor: pointer;
-            font-weight: bold; text-transform: uppercase; transition: 0.1s;
+            font-weight: bold; font-size: 16px; text-transform: uppercase; transition: 0.1s;
         }
-        .btn:active { transform: scale(0.9); }
-        .play-btn { background: #f1c40f; border-color: #d35400; color: black; font-size: 24px; padding: 15px 60px; }
+        .btn:active { transform: scale(0.95); }
+        .play-btn { background: #f1c40f; border-color: #d35400; color: black; font-size: 26px; padding: 15px 70px; animation: pulse 1.5s infinite; }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
 
-        /* OVERLAY MENÜLER (Dükkan & Savaşçılar) */
+        /* MENÜ PENCERELERİ (Dükkan & Savaşçılar) */
         .overlay {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 80%; height: 70%; background: #1a1c2c; border: 5px solid #f39c12;
-            z-index: 200; border-radius: 20px; color: white; padding: 20px;
-            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); overflow-y: auto;
+            border-radius: 20px; color: white; padding: 20px; display: none; z-index: 200; overflow-y: auto;
         }
-        .overlay.active { transform: translate(-50%, -50%) scale(1); }
-        .close-btn { position: absolute; right: 10px; top: 10px; background: red; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 5px; }
+        .close-btn { position: absolute; right: 15px; top: 15px; background: red; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; margin-top: 20px; }
+        .card { background: #2c3e50; border-radius: 10px; padding: 15px; text-align: center; border-bottom: 5px solid #000; cursor: pointer; }
 
-        /* MENÜ İÇERİKLERİ */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; margin-top: 20px; }
-        .card { background: #2c3e50; border-radius: 10px; padding: 10px; text-align: center; border-bottom: 5px solid #000; }
-        .card img { width: 100%; border-radius: 5px; }
+        /* SAVAŞ ALANI (Canvas) */
+        #game-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        
+        /* OYUN İÇİ UI (Gizli başlar) */
+        #in-game-ui { position: absolute; top: 10px; left: 10px; color: white; font-weight: bold; font-size: 20px; z-index: 10; display: none; text-shadow: 2px 2px black; }
     </style>
 </head>
 <body>
 
-    <div id="top-bar">
-        <div class="stat" style="color:#e67e22">🏆 36757</div>
-        <div style="font-size: 22px; text-shadow: 2px 2px #000;">SK | DSFXTR</div>
-        <div style="display:flex; gap:10px;">
-            <div class="stat" style="color:#f1c40f">🟡 14389</div>
-            <div class="stat" style="color:#2ecc71">💎 116</div>
+    <div id="lobby-ui">
+        <div id="top-bar">
+            <div class="stat" style="color:#e67e22">🏆 36757</div>
+            <div style="font-size: 22px; color:white; font-weight:bold; text-shadow: 2px 2px #000;">SK | DSFXTR</div>
+            <div style="display:flex; gap:10px;">
+                <div class="stat" style="color:#f1c40f">🟡 14389</div>
+                <div class="stat" style="color:#2ecc71">💎 116</div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 100px;">
+            <img src="https://labs.phaser.io/assets/sprites/asmos.png" style="width: 150px; filter: drop-shadow(0 0 20px #2ecc71);">
+            <h2 style="color: white; text-shadow: 2px 2px black;">GÜÇ 11 | KENJI HAZIR</h2>
+        </div>
+
+        <div id="bottom-bar">
+            <div class="btn" onclick="toggleMenu('shop')">Dükkan</div>
+            <div class="btn" onclick="toggleMenu('brawlers')">Savaşçılar</div>
+            <div class="btn play-btn" onclick="startMatch()">OYNA</div>
         </div>
     </div>
 
-    <div id="game-container"></div>
-
-    <div id="ui-container">
-        <div class="btn" onclick="openMenu('shop')">Dükkan</div>
-        <div class="btn" onclick="openMenu('brawlers')">Savaşçılar</div>
-        <div class="btn play-btn" onclick="startGame()">OYNA</div>
-        <div class="btn">Kulüp</div>
-    </div>
-
     <div id="shop" class="overlay">
-        <button class="close-btn" onclick="closeMenu('shop')">X</button>
-        <h2>DÜKKAN - ÖZEL TEKLİFLER</h2>
+        <button class="close-btn" onclick="toggleMenu('shop')">KAPAT</button>
+        <h2>DÜKKAN TEKLİFLERİ</h2>
         <div class="grid">
+            <div class="card"><h3>İskelet Surge</h3><p>💎 111</p></div>
             <div class="card"><h3>PSG Shelly</h3><p>💎 69</p></div>
-            <div class="card"><h3>Böcek Carl</h3><p>💎 104</p></div>
-            <div class="card"><h3>Ücretsiz</h3><p>🎁 Al</p></div>
+            <div class="card" style="background:#27ae60;"><h3>Ücretsiz Kutu</h3><p>AL</p></div>
         </div>
     </div>
 
     <div id="brawlers" class="overlay">
-        <button class="close-btn" onclick="closeMenu('brawlers')">X</button>
+        <button class="close-btn" onclick="toggleMenu('brawlers')">KAPAT</button>
         <h2>SAVAŞÇILAR (99/100)</h2>
         <div class="grid">
-            <div class="card" style="background: #fbff00; color: black;"><h3>KENJI</h3><p>GÜÇ 11</p></div>
-            <div class="card" style="background: #e74c3c;"><h3>MORTIS</h3><p>GÜÇ 11</p></div>
-            <div class="card" style="background: #3498db;"><h3>COLT</h3><p>GÜÇ 11</p></div>
-            <div class="card" style="background: #9b59b6;"><h3>EDGAR</h3><p>GÜÇ 11</p></div>
+            <div class="card" style="border-color: #f1c40f;"><h3>KENJI</h3><p>Tıkla ve Seç</p></div>
+            <div class="card" style="border-color: #9b59b6;"><h3>MORTIS</h3><p>Tıkla ve Seç</p></div>
+            <div class="card" style="border-color: #3498db;"><h3>COLT</h3><p>Tıkla ve Seç</p></div>
         </div>
     </div>
 
+    <div id="in-game-ui">Kalan Savaşçı: <span id="alive-count">4</span></div>
+    <div id="game-container"></div>
+
     <script>
-        // MENÜ KONTROLLERİ
-        function openMenu(id) { document.getElementById(id).classList.add('active'); }
-        function closeMenu(id) { document.getElementById(id).classList.remove('active'); }
-        function startGame() { alert("Savaş Alanına Giriliyor..."); }
-
-        // OYUN MOTORU (PHASER)
-        const config = {
-            type: Phaser.AUTO,
-            width: window.innerWidth,
-            height: window.innerHeight,
-            parent: 'game-container',
-            physics: { default: 'arcade' },
-            scene: { preload: preload, create: create, update: update }
-        };
-
-        const game = new Phaser.Game(config);
-        let player, bushes, cursors;
-
-        function preload() {
-            // Arkaplan ve Karakterler
-            this.load.image('ground', 'https://labs.phaser.io/assets/tests/cols/green-tile.png');
-            this.load.image('hero', 'https://labs.phaser.io/assets/sprites/asmos.png');
-            this.load.image('bush', 'https://labs.phaser.io/assets/sprites/block.png');
+        // HTML ARAYÜZ KONTROLLERİ
+        function toggleMenu(id) {
+            let el = document.getElementById(id);
+            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
         }
 
-        function create() {
-            // Gerçek Showdown Zemini
-            this.add.tileSprite(0, 0, 4000, 4000, 'ground').setOrigin(0).setTint(0x1e5d2f);
+        function startMatch() {
+            // Lobiyi gizle, oyunu başlat
+            document.getElementById('lobby-ui').style.display = 'none';
+            document.getElementById('in-game-ui').style.display = 'block';
+            
+            // Gizli olan Phaser oyununu aktif et
+            game.scene.resume('MainScene');
+        }
 
-            // Çalılar (Gruplandırılmış)
-            bushes = this.physics.add.staticGroup();
-            for(let i=0; i<30; i++) {
-                bushes.create(Phaser.Math.Between(100, 1500), Phaser.Math.Between(100, 1500), 'bush').setScale(2).setTint(0x0d3b1a).setAlpha(0.8);
+        // --- PHASER 3 OYUN MOTORU (PROFESYONEL KISIM) ---
+        class MainScene extends Phaser.Scene {
+            constructor() { super('MainScene'); }
+
+            preload() {
+                this.load.image('bg', 'https://labs.phaser.io/assets/tests/cols/green-tile.png');
+                this.load.image('player', 'https://labs.phaser.io/assets/sprites/asmos.png');
+                this.load.image('enemy', 'https://labs.phaser.io/assets/sprites/shmup-ship.png');
+                this.load.image('bullet', 'https://labs.phaser.io/assets/sprites/bullets/bullet6.png');
+                this.load.image('wall', 'https://labs.phaser.io/assets/games/adventure/rock.png');
             }
 
-            // Karakter (Yeşil Halkalı)
-            player = this.physics.add.sprite(window.innerWidth/2, window.innerHeight/2, 'hero');
-            player.setCollideWorldBounds(true);
-            
-            let ring = this.add.graphics();
-            ring.lineStyle(4, 0x2ecc71, 0.8);
-            ring.strokeCircle(0, 0, 35);
-            this.ring = ring;
+            create() {
+                // Dünya sınırları
+                this.physics.world.setBounds(0, 0, 2000, 2000);
+                this.add.tileSprite(0, 0, 4000, 4000, 'bg').setOrigin(0).setTint(0x1a5e3a);
 
-            cursors = this.input.keyboard.createCursorKeys();
-            this.cameras.main.startFollow(player);
+                // Duvarlar (Siper almak için)
+                this.walls = this.physics.add.staticGroup();
+                for(let i=0; i<20; i++) {
+                    this.walls.create(Phaser.Math.Between(200, 1800), Phaser.Math.Between(200, 1800), 'wall').setScale(1.5).setTint(0x7f8c8d);
+                }
+
+                // Ana Karakter (Sensin)
+                this.player = this.physics.add.sprite(1000, 1000, 'player');
+                this.player.setCollideWorldBounds(true);
+                
+                // Oyuncu ismi
+                this.add.text(this.player.x, this.player.y - 40, 'DSFXTR', { fontSize: '16px', fill: '#2ecc71', stroke: '#000', strokeThickness: 4 }).setOrigin(0.5).startFollow = this.player;
+
+                // Mermi Grubu
+                this.bullets = this.physics.add.group({ defaultKey: 'bullet', maxSize: 20 });
+
+                // Bot Rakipler (Savaşçılar)
+                this.enemies = this.physics.add.group();
+                const botNames = ['Mert Efe', 'Eren', 'Atlas'];
+                
+                botNames.forEach((name, index) => {
+                    let ex = 1000 + Phaser.Math.Between(-500, 500);
+                    let ey = 1000 + Phaser.Math.Between(-500, 500);
+                    let bot = this.enemies.create(ex, ey, 'enemy').setTint(0xe74c3c);
+                    bot.setCollideWorldBounds(true);
+                    bot.hp = 3; // 3 vuruşta ölür
+                    bot.nameText = this.add.text(ex, ey - 30, name, { fontSize: '14px', fill: '#e74c3c', stroke: '#000', strokeThickness: 3 }).setOrigin(0.5);
+                });
+
+                // Çarpışma Kuralları
+                this.physics.add.collider(this.player, this.walls);
+                this.physics.add.collider(this.enemies, this.walls);
+                this.physics.add.collider(this.bullets, this.walls, (b) => { b.destroy(); });
+                
+                // Mermi Düşmana Çarparsa
+                this.physics.add.overlap(this.bullets, this.enemies, (bullet, enemy) => {
+                    bullet.destroy();
+                    enemy.hp -= 1;
+                    enemy.setTint(0xffffff);
+                    this.time.delayedCall(100, () => enemy.setTint(0xe74c3c));
+                    
+                    if(enemy.hp <= 0) {
+                        enemy.nameText.destroy();
+                        enemy.destroy();
+                        let count = this.enemies.countActive(true) + 1;
+                        document.getElementById('alive-count').innerText = count;
+                        if(count === 1) alert("BİRİNCİ OLDUN! +10 KUPA 🏆");
+                    }
+                });
+
+                // Kamera Oyuncuyu Takip Etsin
+                this.cameras.main.startFollow(this.player);
+                this.cameras.main.setZoom(1.2);
+
+                // Kontroller
+                this.cursors = this.input.keyboard.createCursorKeys();
+                
+                // Ateş Etme Mekaniği (Ekrana Tıklayınca)
+                this.input.on('pointerdown', (pointer) => {
+                    let bullet = this.bullets.get(this.player.x, this.player.y);
+                    if (bullet) {
+                        bullet.setActive(true).setVisible(true);
+                        // Kameranın pozisyonuna göre mouse tıklandığı yeri hesapla
+                        let worldX = pointer.x + this.cameras.main.scrollX;
+                        let worldY = pointer.y + this.cameras.main.scrollY;
+                        this.physics.moveTo(bullet, worldX, worldY, 600);
+                        
+                        // Mermi 1.5 saniye sonra yok olsun
+                        this.time.delayedCall(1500, () => { if(bullet.active) bullet.destroy(); });
+                    }
+                });
+
+                // Oyun başladığında duraklat, lobi ekranı aktifken oyun arkada beklemesin
+                this.scene.pause();
+            }
+
+            update() {
+                // Oyuncu Hareketi
+                this.player.setVelocity(0);
+                let speed = 250;
+                if (this.cursors.left.isDown) this.player.setVelocityX(-speed);
+                else if (this.cursors.right.isDown) this.player.setVelocityX(speed);
+                if (this.cursors.up.isDown) this.player.setVelocityY(-speed);
+                else if (this.cursors.down.isDown) this.player.setVelocityY(speed);
+
+                // Bot İsimlerini Karakterlerin Üstünde Tut
+                this.enemies.getChildren().forEach(enemy => {
+                    enemy.nameText.x = enemy.x;
+                    enemy.nameText.y = enemy.y - 30;
+                    
+                    // Basit Bot Yapay Zekası: Rastgele hareket et
+                    if(Phaser.Math.Between(0, 100) > 98) {
+                        enemy.setVelocity(Phaser.Math.Between(-150, 150), Phaser.Math.Between(-150, 150));
+                    }
+                });
+
+                // Oyuncu ismini takip ettir
+                this.children.list.find(c => c.text === 'DSFXTR').x = this.player.x;
+                this.children.list.find(c => c.text === 'DSFXTR').y = this.player.y - 40;
+            }
         }
 
-        function update() {
-            player.setVelocity(0);
-            if (cursors.left.isDown) player.setVelocityX(-300);
-            else if (cursors.right.isDown) player.setVelocityX(300);
-            if (cursors.up.isDown) player.setVelocityY(-300);
-            else if (cursors.down.isDown) player.setVelocityY(300);
+        // PHASER AYARLARI
+        const config = {
+            type: Phaser.AUTO, width: window.innerWidth, height: window.innerHeight,
+            parent: 'game-container', physics: { default: 'arcade', arcade: { debug: false } },
+            scene: MainScene
+        };
+        const game = new Phaser.Game(config);
 
-            this.ring.x = player.x;
-            this.ring.y = player.y;
-
-            // Çalı Gizleme Mekaniği
-            let inBush = false;
-            this.physics.overlap(player, bushes, () => { inBush = true; });
-            player.setAlpha(inBush ? 0.4 : 1);
-        }
+        // Ekran boyutu değiştiğinde canvas'ı güncelle
+        window.addEventListener('resize', () => { game.scale.resize(window.innerWidth, window.innerHeight); });
     </script>
 </body>
 </html>
